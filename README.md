@@ -6,7 +6,7 @@ Project Specification
 PID Controller
 
 Compilation:
-    1 - Your code should compile.:Code must compile without errors with cmake and make. Given that we've made CMakeLists.txt as general as possible, it's recommend that you do not change it unless you can guarantee that your changes will still compile on any platform.
+    (OK) - 1 - Your code should compile.:Code must compile without errors with cmake and make. Given that we've made CMakeLists.txt as general as possible, it's recommend that you do not change it unless you can guarantee that your changes will still compile on any platform.
 
 Implementation:
     2 - The PID procedure follows what was taught in the lessons: It's encouraged to be creative, particularly around hyperparameter tuning/optimization. However, the base algorithm should follow what's presented in the lessons.
@@ -19,15 +19,52 @@ Reflection:
 Simulation: 
     5 - The vehicle must successfully drive a lap around the track: No tire may leave the drivable portion of the track surface. The car may not pop up onto ledges or roll over any surfaces that would otherwise be considered unsafe (if humans were in the vehicle).
 
+# https://github.com/jeremy-shannon/CarND-PID-Control-Project
+# https://github.com/udacity/CarND-PID-Control-Project
+# 
+
 **********************************************************************
 -->
 
+# P8-CarND-PID_Controller
+[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
-# CarND-Controls-PID
-Self-Driving Car Engineer Nanodegree Program
+<img src="writeup_files/banner.png" alt="drawing" width="700"/> 
+
+## Overview
+
+In this project, I used what I've learned about PID module. I Coded in C+a Proportional-Integral-Derivative Controller, or PID for short, in order to drive a simulated car around a virtual track. The project involves implementing the controller for car's steering angle but is used also to determine the car's throttle value.
 
 ---
+## Description
 
+Describe the effect each of the P, I, D components had in your implementation.
+
+The P, or "proportional", component had the most directly observable effect on the car's behavior. It causes the car to steer proportional (and opposite) to the car's distance from the lane center (which is the CTE) - if the car is far to the right it steers hard to the left, if it's slightly to the left it steers slightly to the right.
+
+The D, or "differential", component counteracts the P component's tendency to ring and overshoot the center line. A properly tuned D parameter will cause the car to approach the center line smoothly without ringing.
+
+The I, or "integral", component counteracts a bias in the CTE which prevents the P-D controller from reaching the center line. This bias can take several forms, such as a steering drift (as in the Control unit lessons), but I believe that in this particular implementation the I component particularly serves to reduce the CTE around curves.
+
+The final PID controller implementation performed much like in the following video (although, the controller performance suffered due to the screen recording consuming computation resources away from the websocket).
+
+Final Parameters
+
+The following video demonstrates the subtle difference in performance when the I component is removed from the controller. Notice that the center line is not followed as closely around curves.
+
+I Parameter Removed
+
+This final video demonstrates the disastrous effects of removing the D component from the controller. It begins to ring back and forth across the center line until finally leaving the track.
+
+D Parameter Removed
+
+    Describe how the final hyperparameters were chosen.
+
+Hyperparameters were tuned manually at first. This was necessary because the narrow track left little room for error, and when attempting to automate parameter optimization (such as Twiddle) it was very common for the car to leave the track, thus invalidating the optimization. Once I found parameters that were able to get the car around the track reliably, I then implemented Twiddle. I felt it necessary to complete a full lap with each change in parameter because it was the only way to get a decent "score" (total error) for the parameter set. For this reason my parameter changes are allowed to "settle in" for 100 steps and are then evaluated for the next 2000 steps. In all, I allowed Twiddle to continue for over 1 million steps (or roughly 500 trips around the track) to fine tune the parameters to their final values (P: 0.134611, I: 0.000270736, D: 3.05349).
+
+I also implemented a PID controller for the throttle, to maximize the car's speed around the track. The throttle PID controller is fed the magnitude of the CTE because it doesn't make sense to throttle up for right-side CTE and down for left-side CTE, for example. For this reason the throttle controller doesn't include an I component, which would only grow indefinitely. The throttle controller was also fine-tuned using the same Twiddle loop, simultaneously with the steering controller. Though this is not an ideal setup (tuning parameters for two different controllers simultaneously), it still mostly converged to a good (if I do say so myself) solution.
+
+---
 ## Dependencies
 
 * cmake >= 3.5
@@ -121,3 +158,14 @@ still be compilable with cmake and make./
 ## How to write a README
 A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
 
+---
+> **Date:** &nbsp; 04/06/2019  
+> **Programmer:** &nbsp;John A. Betancourt G.   
+> **Mail:** &nbsp;john.betancourt93@gmail.com  
+> **Web:** &nbsp; www.linkedin.com/in/jhon-alberto-betancourt-gonzalez-345557129 
+
+<img src="https://media0.giphy.com/media/l2Je6xTnSDh4dmA4o/giphy.gif" alt="drawing" width="400"/> 
+
+Sorry for my English
+
+<!-- Sorry for my English -->
