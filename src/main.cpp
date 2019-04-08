@@ -4,6 +4,7 @@
 #include <string>
 #include "json.hpp"
 #include "PID.h"
+#include <fstream>
 
 // for convenience
 using nlohmann::json;
@@ -13,6 +14,12 @@ using std::string;
 constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
+
+double calculate_throttle(double steering) {
+  double new_throttle;
+  new_throttle = (1 - std::abs(steering)) * 0.5 + 0.2;
+  return new_throttle; 
+  }
 
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
@@ -33,17 +40,26 @@ string hasData(string s) {
 int main() {
   uWS::Hub h;
 
-  PID pid;
-  /**
-   * Initialize the pid variable.
-   */
-
   std::cout << "Starting PID program" << std::endl;
-  pid.Init(0.2, 0.004, 3.0); // CHECK THIS CHECK THISCHECK THISCHECK THISCHECK THISCHECK THISCHECK THISCHECK THIS
-  std::cout << "PID Control initialized" << std::endl;
 
-  h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, 
-                     uWS::OpCode opCode) {
+  // Create PID variable
+  PID pid_steering; // PID for car's steering angle
+  PID pid_speed; // PID for car's speed
+
+  std::ofstream steering_csv;
+  steering_csv.open ("pid_steering.csv");
+  steering_csv << "json_speed, json_angle, json_cte, throttle, steer_pid, steer_p_error, steer_i_error, steer_d_error\n";
+
+  // Inizializate of  PID controller (Kp_, Ki_, Kd_)
+  pid_steering.Init(0.2, 0.01, 3.0); 
+  pid_speed.Init(0.2, 0.01, 3.0); 
+  std::cout << "PID Controllers initialized" << std::endl;
+
+  // Setting speed reference
+  double desired_speed = 30.0;
+
+  h.onMessage([&pid_steering, &pid_speed, &steering_csv, &desired_speed](
+      uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -57,50 +73,64 @@ int main() {
         if (event == "telemetry") {
           
           // j[1] is the data JSON object
-          double cte = std::stod(j[1]["cte"].get<string>());
-          double speed = std::stod(j[1]["speed"].get<string>());
-          double angle = std::stod(j[1]["steering_angle"].get<string>());
+          double json_steer_cte = std::stod(j[1]["cte"].get<string>());  // car's distance from the lane center
+          double json_speed = std::stod(j[1]["speed"].get<string>()); // Current car's speed
+          double json_angle = std::stod(j[1]["steering_angle"].get<string>()); // Current car's Steering angle
           double steer_value;
-          std::cout << "OK" << std::endl;
-         
-
-          //*******************************************************************
-          /**
-           * TODO: Calculate steering value here, remember the steering value is
-           *   [-1, 1].
-           * NOTE: Feel free to play around with the throttle and speed.
-           *   Maybe use another PID controller to control the speed!
-           */
-          
-          // Update error values with cte
-          pid.UpdateError(cte);
-
-          // Calculate steering value (if reasonable error, returns between [-1, 1])
-          steer_value = pid.TotalError();
-
-          //*******************************************************************
 
           // DEBUG
-          std::cout << "CTE: " << cte << " Steering Value: " << steer_value 
-                    << std::endl;
+          std::cout << "\n| JSON\t| cte: " << json_steer_cte // car's distance from the lane center
+                    << "\t| speed: "    << json_angle  // Current car's speed
+                    << "\t| steering: " << json_speed  // Current car's Steering angle
+                    << "\t|" << std::endl;
 
+          //*******************************************************************          
+          // Update error values with cte
+          pid_steering.UpdateError(json_steer_cte);
+
+          // Calculate steering value (if reasonable error, returns between [-1, 1])
+          steer_value = pid_steering.TotalError();
+
+          // DEBUG
+          double steer_p_error = pid_steering.get_p_error();
+          double steer_i_error = pid_steering.get_i_error();
+          double steer_d_error = pid_steering.get_d_error();
+          std::cout << "| PID \t| steering: " << steer_value
+                    << "\t| p_error: " << steer_p_error
+                    << "\t| i_error: " << steer_i_error
+                    << "\t| d_error: " << steer_d_error
+                    << "\t|" << std::endl;
+
+          // Calculate new throttle value
+          double throttle = calculate_throttle(steer_value);
+
+          // Read values to csv file to plot them later
+          steering_csv 
+            << json_speed << ","
+            << json_angle << ","
+            << json_steer_cte << ","
+            << throttle << ","
+            << steer_value << ","
+            << steer_p_error << ","
+            << steer_i_error << ","
+            << steer_d_error << ","
+            <<"\n";
+          
+          //*******************************************************************
+          // Send steering and throttle values to simulator
           json msgJson;
           msgJson["steering_angle"] = steer_value;
-
-          // Setting throttle with same PID controller as steering
-          // Formula below switches to between [0, 1], larger steering angle means less throttle
-          // Multiplied by 0.5 for safety reasons
-          msgJson["throttle"] = (1 - std::abs(steer_value)) * 0.5 + 0.2;
-          // msgJson["throttle"] = 0.3;
+          msgJson["throttle"] = throttle; 
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-          std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+          
         }  // end "telemetry" if
       } else {
         // Manual driving
         string msg = "42[\"manual\",{}]";
         ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+        steering_csv.close();
       }
     }  // end websocket message if
   }); // end h.onMessage

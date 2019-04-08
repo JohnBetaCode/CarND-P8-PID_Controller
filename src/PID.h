@@ -31,6 +31,11 @@ class PID {
    */
   double TotalError();
 
+  // getters
+  double get_p_error();
+  double get_i_error();
+  double get_d_error();
+
  private:
   /**
    * PID Errors
@@ -38,13 +43,14 @@ class PID {
   double p_error;
   double i_error;
   double d_error;
-
+  
   /**
    * PID Coefficients
    */ 
   double Kp;
   double Ki;
   double Kd;
+
 };
 
 #endif  // PID_H

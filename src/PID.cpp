@@ -20,7 +20,7 @@ void PID::Init(double Kp_, double Ki_, double Kd_) {
   d_error = 0;
   p_error = 0;
   i_error = 0;
-
+  
 }
 
 void PID::UpdateError(double cte) {
@@ -41,7 +41,28 @@ void PID::UpdateError(double cte) {
 
 double PID::TotalError() {
   /**
-  * Calculate and return the total error
+  * Calculate and return the total error which is the 
+  * new steering angle value
   */
-  return -Kp * p_error - Kd * d_error - Ki * i_error;
+  double pid_output = -Kp * p_error - Kd * d_error - Ki * i_error;
+  if (pid_output > 1.0){
+    pid_output = 1.0;
+  }
+  if (pid_output < -1.0){
+    pid_output = -1.0;
+  }
+
+  return pid_output;
+}
+
+double PID::get_p_error() {
+  return p_error;
+}
+
+double PID::get_d_error() {
+  return d_error;
+}
+
+double PID::get_i_error() {
+  return i_error;
 }
