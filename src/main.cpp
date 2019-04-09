@@ -15,10 +15,10 @@ constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 
-double calculate_throttle(double steering) {
-  double new_throttle;
-  new_throttle = (1 - std::abs(steering)) * 0.5 + 0.2;
-  return new_throttle; 
+double recal_speed_ref(double speed_ref, double steering) {
+  double new_speed_ref;
+  new_speed_ref = speed_ref - speed_ref*(std::abs(steering)) + 5;
+  return new_speed_ref; 
   }
 
 // Checks if the SocketIO event has JSON data.
@@ -47,18 +47,22 @@ int main() {
   PID pid_speed; // PID for car's speed
 
   std::ofstream steering_csv;
+  std::ofstream speed_csv;
   steering_csv.open ("pid_steering.csv");
-  steering_csv << "json_speed, json_angle, json_cte, throttle, steer_pid, steer_p_error, steer_i_error, steer_d_error\n";
+  speed_csv.open ("pid_speed.csv");
+  steering_csv << "json_angle, json_cte, steer_pid, steer_p_error, steer_i_error, steer_d_error\n";
+  speed_csv << "json_speed, speed_ref, speed_throttle, speed_p_error, speed_i_error, speed_d_error\n";
 
   // Inizializate of  PID controller (Kp_, Ki_, Kd_)
-  pid_steering.Init(0.2, 0.01, 3.0); 
-  pid_speed.Init(0.2, 0.01, 3.0); 
+  pid_steering.Init(0.05, 0.03, 5.0); 
+  pid_speed.Init(0.2, 0, 0); 
+
   std::cout << "PID Controllers initialized" << std::endl;
 
   // Setting speed reference
-  double desired_speed = 30.0;
+  double desired_speed = 50.0;
 
-  h.onMessage([&pid_steering, &pid_speed, &steering_csv, &desired_speed](
+  h.onMessage([&pid_steering, &pid_speed, &steering_csv, &speed_csv, &desired_speed](
       uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -76,51 +80,79 @@ int main() {
           double json_steer_cte = std::stod(j[1]["cte"].get<string>());  // car's distance from the lane center
           double json_speed = std::stod(j[1]["speed"].get<string>()); // Current car's speed
           double json_angle = std::stod(j[1]["steering_angle"].get<string>()); // Current car's Steering angle
+          
           double steer_value;
 
+          double speed_cte;
+          double speed_throttle;
+          double speed_ref;
+
           // DEBUG
-          std::cout << "\n| JSON\t| cte: " << json_steer_cte // car's distance from the lane center
-                    << "\t| speed: "    << json_angle  // Current car's speed
+          std::cout << "\n| JSON\t\t| speed_cte: " << json_steer_cte // car's distance from the lane center
                     << "\t| steering: " << json_speed  // Current car's Steering angle
+                    << "\t| speed: "    << json_angle  // Current car's speed
                     << "\t|" << std::endl;
 
           //*******************************************************************          
-          // Update error values with cte
+          // Update error values with cte's
           pid_steering.UpdateError(json_steer_cte);
-
           // Calculate steering value (if reasonable error, returns between [-1, 1])
           steer_value = pid_steering.TotalError();
 
-          // DEBUG
+          speed_ref = recal_speed_ref(desired_speed, steer_value);
+          speed_cte = json_speed - speed_ref;
+          pid_speed.UpdateError(speed_cte);
+          speed_throttle = pid_speed.TotalError();
+
+          // DEBUG STEERING PID CONTROLLER
           double steer_p_error = pid_steering.get_p_error();
           double steer_i_error = pid_steering.get_i_error();
           double steer_d_error = pid_steering.get_d_error();
-          std::cout << "| PID \t| steering: " << steer_value
+          std::cout << std::setprecision(4) << std::fixed;
+          std::cout << "| Steering PID \t| steering: " << steer_value
                     << "\t| p_error: " << steer_p_error
                     << "\t| i_error: " << steer_i_error
                     << "\t| d_error: " << steer_d_error
                     << "\t|" << std::endl;
 
-          // Calculate new throttle value
-          double throttle = calculate_throttle(steer_value);
-
           // Read values to csv file to plot them later
+          // json_angle, json_cte, steer_pid, steer_p_error, steer_i_error, steer_d_error
           steering_csv 
-            << json_speed << ","
-            << json_angle << ","
-            << json_steer_cte << ","
-            << throttle << ","
-            << steer_value << ","
-            << steer_p_error << ","
-            << steer_i_error << ","
-            << steer_d_error << ","
+            << json_angle     << "," // json_angle
+            << json_steer_cte << "," // json_cte
+            << steer_value    << "," // steer_pid
+            << steer_p_error  << "," // steer_p_error
+            << steer_i_error  << "," // steer_i_error
+            << steer_d_error  << "," // steer_d_error
+            <<"\n";
+
+          //******************************************************************* 
+          // DEBUG SPEED PID CONTROLLER
+          double speed_p_error = pid_speed.get_p_error();
+          double speed_i_error = pid_speed.get_i_error();
+          double speed_d_error = pid_speed.get_d_error();
+          std::cout << std::setprecision(4) << std::fixed;
+          std::cout << "| Speed PID \t| throttle: " << speed_throttle
+                    << "\t| p_error: " << speed_p_error
+                    << "\t| i_error: " << speed_i_error
+                    << "\t| d_error: " << speed_d_error
+                    << "\t|" << std::endl;
+
+          // json_speed, speed_ref, speed_throttle, speed_p_error, speed_i_error, speed_d_error
+          speed_csv 
+            << json_speed     << "," // json_speed
+            << speed_ref      << "," // speed_ref
+            << speed_throttle << "," // speed_throttle
+            << speed_p_error  << "," // speed_p_error
+            << speed_i_error  << "," // speed_i_error
+            << speed_d_error  << "," // speed_d_error
             <<"\n";
           
           //*******************************************************************
           // Send steering and throttle values to simulator
           json msgJson;
           msgJson["steering_angle"] = steer_value;
-          msgJson["throttle"] = throttle; 
+          msgJson["throttle"] = speed_throttle; 
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
@@ -131,6 +163,7 @@ int main() {
         string msg = "42[\"manual\",{}]";
         ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         steering_csv.close();
+        speed_csv.close();
       }
     }  // end websocket message if
   }); // end h.onMessage

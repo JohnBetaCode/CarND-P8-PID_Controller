@@ -71,7 +71,7 @@ Hyperparameters were manually tuned at first. This was necessary because the nar
 
 I also implemented a PID controller for the throttle, to maximize the car's speed around the track. The throttle PID controller is fed the magnitude of the CTE because it doesn't make sense to throttle up for right-side CTE and down for left-side CTE, for example. For this reason the throttle controller doesn't include an I component, which would only grow indefinitely. The throttle controller was also fine-tuned using the same Twiddle loop, simultaneously with the steering controller. Though this is not an ideal setup (tuning parameters for two different controllers simultaneously), it still mostly converged to a good (if I do say so myself) solution.
 
-<img src="writeup_files/banner.png" alt="drawing" width="700"/> 
+<img src="writeup_files/steering_pid_graph.png" alt="drawing" width="1000"/> 
 
 ### **3 - Results**:
 
