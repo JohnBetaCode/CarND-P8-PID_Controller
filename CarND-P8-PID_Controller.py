@@ -53,11 +53,15 @@ def main():
         1000, 650, 30, os.path.join(os.getcwd(), "video_results", video_name))
     setClipboardData(command.encode())
 
-    # Run make in build fodler
-    os.system('clear && cd build && make') 
-
     # Run subprocess
     try:
+
+        if not os.path.isdir("build"):
+            os.mkdir("build")
+            os.system('cd build && cmake .. && make') 
+        else:
+            os.system('clear && cd build && make') 
+
         processes = (
             "{}".format(os.path.join(os.getcwd(), "term2_sim_linux", "term2_sim.x86_64")),
             "termdown {} && {}".format(0, os.path.join(os.getcwd(), "build", "pid"))
@@ -65,6 +69,7 @@ def main():
         # Run simulator and socket
         pool = Pool(processes=len(processes))                                                        
         pool.map(run_process, processes)
+
     except Exception as e: 
         print(str(e))
 
@@ -197,7 +202,7 @@ def plot_controller_graph(steering_file_path, speed_file_path, save_file=None):
 if __name__=="__main__":
 
     # Run all stuff
-    # main()
+    main()
 
     # Plot steering controller graph
     plot_controller_graph(
