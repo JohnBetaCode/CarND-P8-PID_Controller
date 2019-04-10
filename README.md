@@ -38,17 +38,17 @@ In this project, I used what I've learned about PID module. I Coded in C++ a Pro
 
 <!-- Describe the effect each of the P, I, D components had in your implementation. -->
 
-The steering angle is stetted in proportion to what's know as the cross track error, which is the lateral distance between the vehicle and the so called reference trajectory. So I steer the vehicle in proportion to this cross-track error, for car's throttle value a reference.
+The steering angle is stetted in proportion to what's know as the cross track error, which is the lateral distance between the vehicle and the so called reference trajectory. So I steer the vehicle in proportion to this cross-track error, for car's throttle value the reference is the error between the current speed and the reference speed.
 
-* The P, or "proportional", component had the most directly observable effect on the car's behavior. It causes the car to steer proportional (and opposite) to the car's distance from the lane center (which is the CTE) - if the car is far to the right it steers hard to the left, if it's slightly to the left it steers slightly to the right.
+* The P, or "proportional", component had the most directly observable effect on the car's behavior. It causes the car to steer proportional (and opposite) to the car's distance from the lane center (which is the CTE) - if the car is far to the right it steers hard to the left, if it's slightly to the left it steers slightly to the right. With only P factor the steering value can oscillate which can produce the car leaves the road.
 
 * The D, or "differential", component counteracts the P component's tendency to ring and overshoot the center line. A properly tuned D parameter will cause the car to approach the center line smoothly without ringing.
 
-* The I, or "integral", component counteracts a bias in the CTE which prevents the P-D controller from reaching the center line. This bias can take several forms, such as a steering drift (as in the Control unit lessons). The I component particularly serves to reduce the CTE.
+* The I, or "integral", component counteracts a bias in the CTE which prevents the P-D controller from reaching the center line. This bias can take several forms, such as a steering drift. The I component particularly serves to reduce the CTE (Error).
 
 ### **2 - Hyper-Parameters Selection**:
 
-Hyper-parameters were manually tuned. First implemented a PID controller for the car's throttle to follow a speed reference around the track no matter the disturbances. The throttle PID controller is fed with the error (`speed_cte`) between the current speed (`json_speed`) and the reference speed (`desired_speed`). 
+Hyper-parameters were manually tuned. First I implemented a PID controller for the car's throttle to follow a speed reference around the track no matter the disturbances. The throttle PID controller is fed with the error (`speed_cte`) between the current speed (`json_speed`) and the reference speed (`desired_speed`). 
 
 I used the next procedure which is a good baseline tune to get a good response to disturbances and tune a PID controller: 
 
@@ -57,33 +57,37 @@ I used the next procedure which is a good baseline tune to get a good response t
 3. Increase the D (`Kd_`) gain until the the oscillations go away (Critically damped).
 4. Repeat steps 2 and 3 until increasing the D (`Kd_`) gain does not stop the oscillations.
 5. Set P (`Kp_`) and D (`Kd_`) to the last stable values.
-6. Increase the I (`Ki_`) gain until it brings you to the setpoint with the number of oscillations desired (normally zero but a quicker response can be had if you don't mind a couple oscillations of overshoot)
+6. Increase the I (`Ki_`) gain until it brings you to the set-point with the number of oscillations desired (normally zero but a quicker response can be had if you don't mind a couple oscillations of overshoot)
 
 The disturbance in this case is apply manually a huge steering angle or take off the car from the center of the road. This is moving the mechanism by hand away from the set-point and letting go is enough. 
 
 If the oscillations grow bigger and bigger then you need to reduce the P (`Kp_`) gain. If you set the D (`Kd_`) gain too high the system will begin to chatter (vibrate at a higher frequency than the P gain oscillations). If this happens, reduce the D (`Kd_`) gain until it stops. This method is quite similar to [Ziegler–Nichols method](https://en.wikipedia.org/wiki/Ziegler%E2%80%93Nichols_method).
 
-Sebastian Thrun presented a simple algorithm for tuning PID in his "How to Program a Robotic Car" class. It's called "twiddle", he describes it [here](https://www.youtube.com/watch?v=2uQ2BSzDvXs). Twiddle is very prone to finding local minima--this means that you could come up with a set of three constants that are okay, but not optimal for the situation. The problem of tuning PID constants is a subset of a more general search problem to find certain parameters to maximize utility (in this case, minimizing error of the PID algorithm). You can look into other general solutions to this problem, like hill-climbing, simulated annealing, genetic algorithms, etc. that might end up finding more optimal solutions.
+Sebastian Thrun presented a simple algorithm for tuning PID in his ["How to Program a Robotic Car"](https://www.youtube.com/watch?v=2uQ2BSzDvXs) class. It's called "twiddle". Twiddle is very prone to finding local minima--this means that you could come up with a set of three constants that are okay, but not optimal for the situation. The problem of tuning PID constants is a subset of a more general search problem to find certain parameters to maximize utility, in this case, minimizing error of the PID algorithm for cross track error and speed reference. There's more general solutions to this problem, like hill-climbing, simulated annealing, genetic algorithms, etc. that might end up finding more optimal solutions, but for this exercise I just decided use the simple method already explained.
 
-I got the next parameters:
+So, I got the next parameters for the PID controllers:
 
     pid_steering -> Kd_ = 0.08000, Kd_ = 0.00000, Kd_ = 1.00000 
     pid_speed ----> Kd_ = 0.02000, Kd_ = 0.00035, Kd_ = 1.00000
 
-Probabily these PID parameters are not the best solution for this problem, but whit these, I was able to drive safty the car to 50mph without leaving the road. 
+Probably these PID parameters are not the best solution for this problem, but with these I was able to drive safely the car to 50 mph without leaving the road.
+
+In the next graphs to the left you can see the speed PID controller response and on the right the steering angle PID controller response. For speed Controller in these three cases you can see how the references of 20mph, 40mph, 50mph are followed. The seed controller just overshots a little bit the reference at the beginning due to the I factor. the curves in the road can be shown as disturbances for this PID controller, but you can see how it deals with with the throttle value. 
+
+For the steering controller the response is some oscillating, but you can see how the cross track error tends to zero. 
+
+Steering and Speed Controller response at 20mph:
 
 <img src="writeup_files/steering_pid_graph_20mph.png" alt="drawing" width="1000"/>  
 
-Steering and Speed Controller at 20mph
+Steering and Speed Controllers response at 40mph:
 
 <img src="writeup_files/steering_pid_graph_40mph.png" alt="drawing" width="1000"/>  
 
-Steering and Speed Controller at 40mph
 
+Steering and Speed Controller response at 40mph:
 
 <img src="writeup_files/steering_pid_graph_50mph.png" alt="drawing" width="1000"/>  
-
-Steering and Speed Controller at 40mph
 
 ### **3 - Results**:
 
@@ -138,6 +142,7 @@ Students have put together a guide to Windows set-up for the project [here](http
     ```
     clear && python3 CarND-P8-PID_Controller.py
     ```
+Yes, I know, making a build with a python script is horrible, I'm a bad person but too lazy as well to write the make line every time that I changed something in my code, dont judge me. This script also run everything for you. If you want to plot the PID controllers responses just enter in manual mode when you're done in the simulator, in this way the c++ code close csv files to plot them later with matplotlib in the python code. 
 
 Tips for setting up the environment can be found [here](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/0949fca6-b379-42af-a919-ee50aa304e6a/lessons/f758c44c-5e40-4e01-93b5-1a82aa4e044f/concepts/23d376c7-0195-4276-bdf0-e02f1f3c665d)
 
