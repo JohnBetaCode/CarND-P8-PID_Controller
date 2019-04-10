@@ -17,9 +17,9 @@ void PID::Init(double Kp_, double Ki_, double Kd_) {
   Ki = Ki_;
   Kd = Kd_;
 
-  d_error = 0;
   p_error = 0;
   i_error = 0;
+  d_error = 0;
   
 }
 

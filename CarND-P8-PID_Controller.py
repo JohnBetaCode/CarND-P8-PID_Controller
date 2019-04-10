@@ -18,6 +18,7 @@ Tested on:
 # =============================================================================
 # LIBRARIES AND DEPENDENCIES - LIBRARIES AND DEPENDENCIES - LIBRARIES AND DEPEN
 # =============================================================================
+import numpy as np
 import os
 
 from multiprocessing import Pool 
@@ -137,12 +138,15 @@ def plot_controller_graph(steering_file_path, speed_file_path, save_file=None):
     plt.grid(True)
 
     plt.subplot(3, 2, 3)
-    plt.plot(speed_p_error, '#0000FF')
-    plt.plot(speed_i_error, '#008000')
-    plt.plot(speed_d_error, '#FF00FF')
-    speed_p_error_patch = mpatches.Patch(color='#0000FF', label='speed_p_error')
-    speed_i_error_patch = mpatches.Patch(color='#008000', label='speed_i_error') 
-    speed_d_error_patch = mpatches.Patch(color='#FF00FF', label='speed_d_error')    
+    speed_p_error_max = max(abs(np.asarray(speed_p_error)))
+    speed_i_error_max = max(abs(np.asarray(speed_i_error)))
+    speed_d_error_max = max(abs(np.asarray(speed_d_error)))
+    plt.plot(np.asarray(speed_p_error)/speed_p_error_max, '#0000FF')
+    plt.plot(np.asarray(speed_i_error)/speed_i_error_max, '#008000')
+    plt.plot(np.asarray(speed_d_error)/speed_d_error_max, '#FF00FF')
+    speed_p_error_patch = mpatches.Patch(color='#0000FF', label='speed_p_error norm:{}'.format(round(speed_p_error_max, 2)))
+    speed_i_error_patch = mpatches.Patch(color='#008000', label='speed_i_error norm:{}'.format(round(speed_i_error_max, 2)))
+    speed_d_error_patch = mpatches.Patch(color='#FF00FF', label='speed_d_error norm:{}'.format(round(speed_d_error_max, 2)))
     plt.legend(handles=[speed_p_error_patch, speed_i_error_patch, speed_d_error_patch])
     plt.title('Throttle PID Controller errors')
     plt.xlabel('Iteration (t)')
@@ -170,13 +174,16 @@ def plot_controller_graph(steering_file_path, speed_file_path, save_file=None):
     plt.ylabel('Steering Angle')
     plt.grid(True)
     
+    steer_p_error_max = max(abs(np.asarray(steer_p_error)))
+    steer_i_error_max = max(abs(np.asarray(steer_i_error)))
+    steer_d_error_max = max(abs(np.asarray(steer_d_error)))
     plt.subplot(3, 2, 4)
-    plt.plot(steer_p_error, '#0000FF')
-    plt.plot(steer_i_error, '#008000')
-    plt.plot(steer_d_error, '#FF00FF')
-    steer_p_error_patch = mpatches.Patch(color='#0000FF', label='steer_p_error')
-    steer_i_error_patch = mpatches.Patch(color='#008000', label='steer_i_error') 
-    steer_d_error_patch = mpatches.Patch(color='#FF00FF', label='steer_d_error')    
+    plt.plot(np.asarray(steer_p_error)/steer_p_error_max, '#0000FF')
+    plt.plot(np.asarray(steer_i_error)/steer_i_error_max, '#008000')
+    plt.plot(np.asarray(steer_d_error)/steer_d_error_max, '#FF00FF')
+    steer_p_error_patch = mpatches.Patch(color='#0000FF', label='steer_p_error norm:{}'.format(round(steer_p_error_max, 2)))
+    steer_i_error_patch = mpatches.Patch(color='#008000', label='steer_i_error norm:{}'.format(round(steer_i_error_max, 2)))
+    steer_d_error_patch = mpatches.Patch(color='#FF00FF', label='steer_d_error norm:{}'.format(round(steer_d_error_max, 2)))
     plt.legend(handles=[steer_p_error_patch, steer_i_error_patch, steer_d_error_patch])
     plt.title('Steering PID Controller errors')
     plt.xlabel('Iteration (t)')

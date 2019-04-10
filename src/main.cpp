@@ -48,11 +48,8 @@ int main() {
   speed_csv << "json_speed, speed_ref, speed_throttle, speed_p_error, speed_i_error, speed_d_error\n";
 
   // Inizializate of  PID controller (Kp_, Ki_, Kd_)
-  //pid_steering.Init(0.05, 0.03, 5.0); 
-  // pid_speed.Init(0.2, 0.00, 0); 
-  pid_steering.Init(0.1, 0.0001, 1.00); 
+  pid_steering.Init(0.08, 0, 1.00); 
   pid_speed.Init(0.2, 0.00035, 1.0); 
-
   std::cout << "PID Controllers initialized" << std::endl;
 
   // Setting speed reference 
@@ -79,7 +76,6 @@ int main() {
           double steer_value;
           double speed_cte;
           double speed_throttle;
-
 
           // DEBUG
           std::cout << "\n| JSON\t\t| speed_cte: " << json_steer_cte // car's distance from the lane center
