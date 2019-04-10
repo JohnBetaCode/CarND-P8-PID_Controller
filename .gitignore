@@ -106,5 +106,5 @@ video_resources/
 build/
 term2_sim_linux/
 build/
-
+video_results/
 .vscode/

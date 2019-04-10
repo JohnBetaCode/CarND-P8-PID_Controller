@@ -19,15 +19,8 @@ Reflection:
 
 **********************************************************************
 Simulation: 
-    3 - The vehicle must successfully drive a lap around the track: No tire may leave the drivable portion of the track surface. The car may not pop up onto ledges or roll over any surfaces that would otherwise be considered unsafe (if humans were in the vehicle).
+    (OK) - 3 - The vehicle must successfully drive a lap around the track: No tire may leave the drivable portion of the track surface. The car may not pop up onto ledges or roll over any surfaces that would otherwise be considered unsafe (if humans were in the vehicle).
 
-video name: P8-CarND-PID_Controller
-Video description:
-    In this project, I used what I've learned about PID module. I Coded in C++ a Proportional-Integral-Derivative Controller, or PID for short, in order to drive a simulated car around a virtual track. The project involves implementing the controller for car's steering angle but is used also to determine the car's throttle value.
-video topics: code, PID, Controller, Self Driving Car, Udacity, Python, C++
-
-**********************************************************************
-https://github.com/jeremy-shannon/CarND-PID-Control-Project
 **********************************************************************
 -->
 
@@ -71,7 +64,9 @@ Hyperparameters were manually tuned at first. This was necessary because the nar
 
 I also implemented a PID controller for the throttle, to maximize the car's speed around the track. The throttle PID controller is fed the magnitude of the CTE because it doesn't make sense to throttle up for right-side CTE and down for left-side CTE, for example. For this reason the throttle controller doesn't include an I component, which would only grow indefinitely. The throttle controller was also fine-tuned using the same Twiddle loop, simultaneously with the steering controller. Though this is not an ideal setup (tuning parameters for two different controllers simultaneously), it still mostly converged to a good (if I do say so myself) solution.
 
-<img src="writeup_files/steering_pid_graph.png" alt="drawing" width="700"/> 
+<img src="writeup_files/steering_pid_graph_40mph.png" alt="drawing" width="1000"/> 
+<img src="writeup_files/steering_pid_graph_50mph.png" alt="drawing" width="1000"/> 
+
 
 ### **3 - Results**:
 
@@ -86,7 +81,8 @@ Final results show how the vehicle successfully drive a lap around the track:
 
 Complete video of PID driving in a complete lap:  
 
-[P8-CarND-PID_Controller](PUT LINK HERE)
+[P8-CarND-PID_Controller_40MPH](https://youtu.be/vjxMtnGiqOM)  
+[P8-CarND-PID_Controller_50MPH](https://youtu.be/QHh3DN3BiJw)
 
 ---
 ## Dependencies
@@ -116,25 +112,23 @@ Students have put together a guide to Windows set-up for the project [here](http
 
 ## Basic Build Instructions
 
-1. Clone this repo.
-2. Make a build directory: `mkdir build && cd build`
+1. Clone [CarND-P8-PID_Controller](https://github.com/JohnBetaCode/CarND-P8-PID_Controller)
+2. Make a build directory with: `mkdir build && cd build`
 3. Compile: `cmake .. && make`
-4. Run it: `./pid`. 
-
-5. After this you just can run the script: 
-
-        ./CarND-P8-PID_Controller.py
+4. Run it: `./pid`.
+5. After this you just can run the script to build and run all: 
+    ```
+    clear && python3 CarND-P8-PID_Controller.py
+    ```
 
 Tips for setting up the environment can be found [here](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/0949fca6-b379-42af-a919-ee50aa304e6a/lessons/f758c44c-5e40-4e01-93b5-1a82aa4e044f/concepts/23d376c7-0195-4276-bdf0-e02f1f3c665d)
 
 ---
-> **Date:** &nbsp; 04/08/2019  
+> **Date:** &nbsp; 04/10/2019  
 > **Programmer:** &nbsp;John A. Betancourt G.   
 > **Mail:** &nbsp;john.betancourt93@gmail.com  
 > **Web:** &nbsp; www.linkedin.com/in/jhon-alberto-betancourt-gonzalez-345557129 
 
 <img src="https://media.giphy.com/media/3fN8BMRnvIdR6/giphy.gif" alt="drawing" width="400"/> 
-
-Sorry for my English
 
 <!-- Sorry for my English -->

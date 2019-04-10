@@ -15,12 +15,6 @@ constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 
-double recal_speed_ref(double speed_ref, double steering) {
-  double new_speed_ref;
-  new_speed_ref = speed_ref - speed_ref*(std::abs(steering)) + 5;
-  return new_speed_ref; 
-  }
-
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
 // else the empty string "" will be returned.
@@ -54,16 +48,18 @@ int main() {
   speed_csv << "json_speed, speed_ref, speed_throttle, speed_p_error, speed_i_error, speed_d_error\n";
 
   // Inizializate of  PID controller (Kp_, Ki_, Kd_)
-  pid_steering.Init(0.05, 0.03, 5.0); 
-  pid_speed.Init(0.2, 0, 0); 
+  //pid_steering.Init(0.05, 0.03, 5.0); 
+  // pid_speed.Init(0.2, 0.00, 0); 
+  pid_steering.Init(0.1, 0.0001, 1.00); 
+  pid_speed.Init(0.2, 0.00035, 1.0); 
 
   std::cout << "PID Controllers initialized" << std::endl;
 
-  // Setting speed reference
+  // Setting speed reference 
   double desired_speed = 50.0;
 
   h.onMessage([&pid_steering, &pid_speed, &steering_csv, &speed_csv, &desired_speed](
-      uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+    uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -80,12 +76,10 @@ int main() {
           double json_steer_cte = std::stod(j[1]["cte"].get<string>());  // car's distance from the lane center
           double json_speed = std::stod(j[1]["speed"].get<string>()); // Current car's speed
           double json_angle = std::stod(j[1]["steering_angle"].get<string>()); // Current car's Steering angle
-          
           double steer_value;
-
           double speed_cte;
           double speed_throttle;
-          double speed_ref;
+
 
           // DEBUG
           std::cout << "\n| JSON\t\t| speed_cte: " << json_steer_cte // car's distance from the lane center
@@ -99,8 +93,7 @@ int main() {
           // Calculate steering value (if reasonable error, returns between [-1, 1])
           steer_value = pid_steering.TotalError();
 
-          speed_ref = recal_speed_ref(desired_speed, steer_value);
-          speed_cte = json_speed - speed_ref;
+          speed_cte = json_speed - desired_speed;
           pid_speed.UpdateError(speed_cte);
           speed_throttle = pid_speed.TotalError();
 
@@ -141,7 +134,7 @@ int main() {
           // json_speed, speed_ref, speed_throttle, speed_p_error, speed_i_error, speed_d_error
           speed_csv 
             << json_speed     << "," // json_speed
-            << speed_ref      << "," // speed_ref
+            << desired_speed  << "," // speed_ref
             << speed_throttle << "," // speed_throttle
             << speed_p_error  << "," // speed_p_error
             << speed_i_error  << "," // speed_i_error
